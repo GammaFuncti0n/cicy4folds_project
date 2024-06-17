@@ -1,0 +1,5 @@
+models/
+results/
+data/
+__pycache__
+*checkpoints
