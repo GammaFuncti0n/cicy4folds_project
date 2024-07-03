@@ -3,6 +3,8 @@ import torch
 import numpy as np
 import matplotlib.pyplot as plt
 
+from sklearn.metrics import mean_squared_error, accuracy_score, balanced_accuracy_score, f1_score, precision_score, recall_score
+
 '''
 File with train, test functions
 '''
@@ -34,17 +36,27 @@ def train_epoch(model, optimizer, criterion, train_dataloader, validate_dataload
 
 def test(model, criterion, test_dataloader, config):
     list_loss_test = []
+    predictions = np.array([])
+    targets = np.array([])
+
     model.eval()
-    correct = total = 0
     for batch in tqdm(test_dataloader):
         outputs_test = model(batch['matrix'].to(config['model']['device']))
         ground_truth = batch['hodge_number'].to(config['model']['device'])
         loss_test = criterion(outputs_test, ground_truth.unsqueeze(1))
         list_loss_test.append(loss_test.to('cpu').item())
 
-        correct += (outputs_test.squeeze(-1).round()==ground_truth).sum()
-        total += len(ground_truth)
-    return {'test_loss': np.mean(list_loss_test), 'test_accuracy': correct/total}
+        predictions = np.concatenate((predictions, outputs_test.cpu().detach().squeeze(1).numpy()))
+        targets = np.concatenate((targets, batch['hodge_number'].detach().numpy()))
+    
+    return {'test_loss': np.mean(list_loss_test), 
+            'test_mse': mean_squared_error(targets, predictions),
+            'test_accuracy': accuracy_score(targets, predictions.round()),
+            'test_balanced_accuracy': balanced_accuracy_score(targets, predictions.round()),
+            'test_f1': f1_score(targets, predictions.round(), average='weighted'),
+            'test_precision': precision_score(targets, predictions.round(), average='weighted'),
+            'test_recall': recall_score(targets, predictions.round(), average='weighted')
+            }
 
 
 def display_losses(train_loss, val_loss, config):
