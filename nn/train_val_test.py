@@ -1,9 +1,10 @@
 from tqdm import tqdm
 import torch
+from time import time
 import numpy as np
 import matplotlib.pyplot as plt
 
-from sklearn.metrics import mean_squared_error, accuracy_score, balanced_accuracy_score, f1_score, precision_score, recall_score
+from sklearn.metrics import root_mean_squared_error, mean_absolute_error, mean_absolute_percentage_error, accuracy_score, balanced_accuracy_score, f1_score, precision_score, recall_score
 
 '''
 File with train, test functions
@@ -14,25 +15,33 @@ def train_epoch(model, optimizer, criterion, train_dataloader, validate_dataload
     list_loss_train = []
     list_loss_val = []
 
+    list_accuracy_train = []
+    list_accuracy_val = []
+
     model.train()
     for batch in train_dataloader:
         optimizer.zero_grad()
         outputs_train = model(batch['matrix'].to(config['model']['device']))
-    
+
         loss_train = criterion(outputs_train, batch['hodge_number'].to(config['model']['device']).unsqueeze(1))
-        list_loss_train.append(loss_train.to('cpu').item())
         loss_train.backward()
         optimizer.step()
+
+        list_loss_train.append(loss_train.cpu().item())
+        list_accuracy_train.append(accuracy_score(batch['hodge_number'], outputs_train.round().detach().cpu()))
     
     model.eval()
     for batch in validate_dataloader:
         outputs_val = model(batch['matrix'].to(config['model']['device']))
         loss_val = criterion(outputs_val, batch['hodge_number'].to(config['model']['device']).unsqueeze(1))
-        list_loss_val.append(loss_val.to('cpu').item())
+        list_loss_val.append(loss_val.cpu().item())
+        list_accuracy_val.append(accuracy_score(batch['hodge_number'], outputs_val.round().detach().cpu()))
     
     torch.cuda.empty_cache()
-    return {'train_loss': np.mean(list_loss_train), 'validation_loss': np.mean(list_loss_val)}
-
+    return {'train_loss': np.mean(list_loss_train), 
+            'validation_loss': np.mean(list_loss_val), 
+            'train_accuracy': np.mean(list_accuracy_train),
+            'validation_accuracy': np.mean(list_accuracy_val)}
 
 def test(model, criterion, test_dataloader, config):
     list_loss_test = []
@@ -49,13 +58,15 @@ def test(model, criterion, test_dataloader, config):
         predictions = np.concatenate((predictions, outputs_test.cpu().detach().squeeze(1).numpy()))
         targets = np.concatenate((targets, batch['hodge_number'].detach().numpy()))
     
-    return {'test_loss': np.mean(list_loss_test), 
-            'test_mse': mean_squared_error(targets, predictions),
-            'test_accuracy': accuracy_score(targets, predictions.round()),
-            'test_balanced_accuracy': balanced_accuracy_score(targets, predictions.round()),
-            'test_f1': f1_score(targets, predictions.round(), average='weighted'),
-            'test_precision': precision_score(targets, predictions.round(), average='weighted'),
-            'test_recall': recall_score(targets, predictions.round(), average='weighted')
+    return {'loss': np.mean(list_loss_test), 
+            'rmse': root_mean_squared_error(targets, predictions),
+            'mae': mean_absolute_error(targets, predictions),
+            'mape': mean_absolute_percentage_error(targets, predictions),
+            'accuracy': accuracy_score(targets, predictions.round()),
+            'balanced_accuracy': balanced_accuracy_score(targets, predictions.round()),
+            'f1': f1_score(targets, predictions.round(), average='weighted'),
+            'precision': precision_score(targets, predictions.round(), average='weighted'),
+            'recall': recall_score(targets, predictions.round(), average='weighted')
             }
 
 

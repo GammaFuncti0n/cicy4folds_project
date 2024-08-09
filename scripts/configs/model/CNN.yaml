@@ -1,0 +1,5 @@
+model_name: CNN
+
+device: cuda
+
+model_params: Null

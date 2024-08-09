@@ -1,0 +1,26 @@
+defaults:
+  - _self_
+  - model: CNN
+
+data_path: ../data/
+models_weight_path: ../models_weight/
+
+dataset:
+  target_name: 'h11'
+  class_label: original
+  capacity: 0.1
+  test_size: 0.3
+
+dataloader:
+  num_workers: 4
+  train_batch: 2048
+  validation_batch: 2048
+  test_batch: 2048
+
+trainer_params:
+  num_epochs: 30
+  learning_rate: 0.005
+  weight_decay: 0.00001
+
+project_name: cicy4folds
+task_name: ${model.model_name}_for_${dataset.target_name}

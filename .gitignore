@@ -1,5 +1,7 @@
-models/
+models_weight/
+models_on_server/
 results/
 data/
+outputs/
 __pycache__
 *checkpoints

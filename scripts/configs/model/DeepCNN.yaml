@@ -1,0 +1,5 @@
+model_name: DeepCNN
+
+device: cuda
+
+model_params: Null

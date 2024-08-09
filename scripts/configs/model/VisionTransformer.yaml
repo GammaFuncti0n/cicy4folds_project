@@ -1,0 +1,14 @@
+model_name: VisionTransformer
+
+device: cuda
+
+model_params:
+  num_patches: 20
+  patch_size: 4
+  embed_dim: 32
+  pool_size: 2
+  num_layers: 2
+  num_heads: 1
+  mlp_dim: 256
+  out_dim: 1
+  std: 0.2
